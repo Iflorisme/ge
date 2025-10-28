@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Linkvertise Solver - Extract destination URLs from Linkvertise links">
+    <title>Linkvertise Solver</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1 class="title">Linkvertise Solver</h1>
+            <p class="subtitle">Extract destination URLs from Linkvertise links</p>
+        </header>
+
+        <main class="main-content">
+            <div class="input-section">
+                <label for="linkInput" class="input-label">Enter Linkvertise URL:</label>
+                <div class="input-wrapper">
+                    <input 
+                        type="text" 
+                        id="linkInput" 
+                        class="link-input" 
+                        placeholder="https://linkvertise.com/..." 
+                        aria-label="Linkvertise URL input"
+                    />
+                    <button id="clearBtn" class="clear-btn" aria-label="Clear input">
+                        <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
+                            <path d="M10 0C4.486 0 0 4.486 0 10s4.486 10 10 10 10-4.486 10-10S15.514 0 10 0zm5 13.59L13.59 15 10 11.41 6.41 15 5 13.59 8.59 10 5 6.41 6.41 5 10 8.59 13.59 5 15 6.41 11.41 10 15 13.59z"/>
+                        </svg>
+                    </button>
+                </div>
+                <button id="solveBtn" class="solve-btn" aria-label="Solve Linkvertise URL">
+                    <span class="btn-text">Solve Link</span>
+                    <span class="btn-loader"></span>
+                </button>
+            </div>
+
+            <div id="resultSection" class="result-section hidden">
+                <div class="result-header">
+                    <h2 class="result-title">Result</h2>
+                    <button id="copyBtn" class="copy-btn" aria-label="Copy result">
+                        <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
+                            <path d="M7 13V5h8v8H7zm-2 2V3h12v12H5zm-2 2V7h2v8h8v2H3z"/>
+                        </svg>
+                        <span>Copy</span>
+                    </button>
+                </div>
+                <div id="resultContent" class="result-content"></div>
+            </div>
+
+            <div id="errorSection" class="error-section hidden">
+                <div class="error-icon">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
+                    </svg>
+                </div>
+                <div id="errorContent" class="error-content"></div>
+            </div>
+
+            <div class="info-section">
+                <h3 class="info-title">How to use:</h3>
+                <ol class="info-list">
+                    <li>Copy a Linkvertise URL that you want to bypass</li>
+                    <li>Paste it into the input field above</li>
+                    <li>Click "Solve Link" to extract the destination URL</li>
+                    <li>Copy the result and use it directly</li>
+                </ol>
+                <div class="info-note">
+                    <strong>Note:</strong> This tool attempts to extract destination URLs from Linkvertise links. 
+                    Success depends on the link structure and type. Some links may require additional verification.
+                </div>
+            </div>
+        </main>
+
+        <footer class="footer">
+            <p>&copy; 2024 Linkvertise Solver. For educational purposes only.</p>
+        </footer>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
