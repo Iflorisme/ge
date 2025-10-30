@@ -46,6 +46,16 @@ class GenBot(discord.Client):
         
         await self.fetch_command_id()
         print()
+        print("=" * 60)
+        
+        if self.pgen_command_id:
+            print(f"✅ Command Status: READY (ID: {self.pgen_command_id})")
+        else:
+            print(f"❌ Command Status: NOT FOUND (Will use fallback)")
+        
+        print("=" * 60)
+        print()
+        input("Press Enter to continue...")
         
         await self.start_gen_process()
         
@@ -189,6 +199,12 @@ class GenBot(discord.Client):
         print("=" * 60)
         print(f"Stock: {self.current_stock}")
         print(f"Target: {self.target_gens} accounts")
+        
+        if self.pgen_command_id:
+            print(f"Command: Using slash command (ID: {self.pgen_command_id[:8]}...)")
+        else:
+            print(f"Command: Using text fallback (command ID not found)")
+        
         print("=" * 60)
         print()
         
