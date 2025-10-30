@@ -1,6 +1,6 @@
-# Discord Self-Bot with Ping Command
+# Discord Account Generator Bot
 
-A simple Discord self-bot that responds to the `!ping` command with "pong". This bot runs on your own Discord user account and only responds to commands sent by you.
+An automated Discord self-bot that generates accounts using the `/pgen` command with AI-powered CAPTCHA solving capabilities.
 
 ## ⚠️ Important Disclaimer
 
@@ -8,19 +8,45 @@ A simple Discord self-bot that responds to the `!ping` command with "pong". This
 
 ## Features
 
-- Responds to `!ping` command with "pong"
-- Only responds to messages from the authenticated user account
-- Comprehensive error handling
-- Logging to both console and file
-- Externalized configuration via environment variables
+- 🤖 Automated account generation with `/pgen` command
+- 🎯 Target specific channel and bot for generation
+- 📊 Real-time console UI with progress tracking
+- 🧠 AI-powered CAPTCHA solving using Pollinations AI (OpenAI GPT-5 Nano with vision)
+- ⏱️ Automatic cooldown management (3 seconds between gens)
+- 📧 Automatic credential extraction from DMs
+- 🔄 Handles generation limits (max 5 before CAPTCHA)
+- 🎨 Clean console interface with progress bars
 
 ## Requirements
 
 - Python 3.8 or higher
 - A Discord user account
 - Your Discord user token
+- Access to the target channel and bot
+
+## Configuration
+
+The bot is pre-configured with:
+- **Channel ID:** `1422966181966516458`
+- **Bot ID:** `1312131736691277914`
+- **Max Generations:** 5 (before CAPTCHA)
+- **Cooldown:** 3 seconds between generations
 
 ## Installation
+
+### For Replit (Recommended)
+
+1. Fork or import this repl to your Replit account
+
+2. Set up your Discord token in Replit Secrets:
+   - Click on "Tools" > "Secrets" (or the lock icon 🔒 in the left sidebar)
+   - Add a new secret:
+     - **Key:** `token`
+     - **Value:** Your Discord user token (see below for how to get it)
+
+3. Click the "Run" button
+
+### For Local Development
 
 1. Clone this repository:
    ```bash
@@ -39,14 +65,19 @@ A simple Discord self-bot that responds to the `!ping` command with "pong". This
    pip install -r requirements.txt
    ```
 
-4. Copy the example environment file and configure it:
+4. Create a `.env` file:
    ```bash
    cp .env.example .env
    ```
 
 5. Edit `.env` and add your Discord user token:
    ```
-   DISCORD_TOKEN=your_discord_user_token_here
+   token=your_discord_user_token_here
+   ```
+
+6. Run the bot:
+   ```bash
+   python bot.py
    ```
 
 ## Getting Your Discord Token
@@ -63,49 +94,144 @@ A simple Discord self-bot that responds to the `!ping` command with "pong". This
 
 ## Usage
 
-1. Ensure your `.env` file is configured with your Discord token
+1. Start the bot (it will automatically log in)
 
-2. Run the bot:
-   ```bash
-   python bot.py
+2. You'll see a welcome screen with bot information
+
+3. Enter the stock name when prompted:
    ```
-
-3. Once the bot is running, you should see a message indicating it's logged in
-
-4. In any Discord channel, send the message:
-   ```
-   !ping
+   Select Stock to gen: Netflix
    ```
 
-5. The bot will respond with:
+4. Enter how many accounts to generate:
    ```
-   pong
+   How much to gen: 3
    ```
+
+5. The bot will:
+   - Clear the console and show a progress UI
+   - Send `/pgen stock:{stock}` commands to the target channel
+   - Wait for the bot to respond with generated accounts
+   - Automatically extract credentials from DMs
+   - Handle CAPTCHAs automatically using AI vision
+   - Display all generated accounts at the end
 
 ## How It Works
 
-- The bot monitors all messages in channels you have access to
-- When it detects a `!ping` command from your account, it responds with "pong"
-- Only messages sent by your own account will trigger the response
-- All activity is logged to both the console and `bot.log` file
+### Account Generation Process
 
-## Error Handling
+1. **Command Execution:** Bot sends `/pgen stock:{stock}` to the configured channel
+2. **Response Detection:** Monitors for success embed with "Generated" or "Check your DMs"
+3. **Credential Extraction:** Parses DM messages for username and password
+4. **Cooldown:** Waits 3 seconds before next generation
+5. **Limit Tracking:** Counts successful generations (max 5)
 
-The bot includes error handling for:
-- Missing or invalid Discord tokens
-- Permission errors (when the bot can't send messages)
-- Network/HTTP errors
-- Unexpected exceptions
+### CAPTCHA Handling
 
-All errors are logged to help with troubleshooting.
+When the bot detects a CAPTCHA (after 5 generations):
 
-## Logging
+1. **Detection:** Identifies CAPTCHA embed with "CAPTCHA Required" title
+2. **Image Extraction:** Gets the CAPTCHA image URL from the embed
+3. **AI Solving:** Sends image to Pollinations AI (OpenAI GPT-5 Nano with vision)
+4. **Code Extraction:** AI returns the CAPTCHA code
+5. **Button Click:** Clicks the "Verify Captcha" button
+6. **Modal Submission:** Fills and submits the Discord modal with the code
+7. **Continue:** Resets counter and continues generation
 
-The bot maintains logs in two places:
-- Console output (real-time)
-- `bot.log` file (persistent)
+### Console UI
 
-Logs include timestamps and severity levels for easy debugging.
+The bot provides a clean console interface:
+
+```
+============================================================
+  GENERATION IN PROGRESS
+============================================================
+Stock: Netflix
+Target: 3 accounts
+============================================================
+
+[████████████████████████████░░░░░░░░░░░░░░░░░░░░░░] 60% (3/5)
+✓ Gen #1 successful!
+📧 Received credentials: user@example.com
+⏳ Cooldown 3s... Done!
+```
+
+## Features Breakdown
+
+### Progress Tracking
+- Real-time progress bar with percentage
+- Generation counter (current/target)
+- Success notifications
+
+### Error Handling
+- Connection errors
+- Permission errors
+- Timeout detection (30s per generation)
+- CAPTCHA solving failures
+- Graceful error recovery
+
+### AI CAPTCHA Solving
+- Uses Pollinations AI API
+- OpenAI GPT-5 Nano model with vision
+- Automatic image download and encoding
+- Smart code extraction (alphanumeric only)
+- Retry logic for failed attempts
+
+### Credential Management
+- Automatic extraction from DM embeds
+- Clean formatting (username:password)
+- Final summary with all generated accounts
+- Easy copy-paste format
+
+## Configuration Options
+
+You can modify these constants in `bot.py`:
+
+```python
+CHANNEL_ID = 1422966181966516458  # Target channel
+BOT_ID = 1312131736691277914      # Target bot
+MAX_GENS = 5                       # Max gens before CAPTCHA
+COOLDOWN = 3                       # Seconds between gens
+```
+
+## Troubleshooting
+
+### Bot won't start
+- Verify your token is set correctly in Replit Secrets or `.env`
+- Make sure you've installed all dependencies
+- Check that you're using Python 3.8+
+
+### No response from bot
+- Verify the channel ID is correct
+- Ensure you have access to the channel
+- Check that the bot ID matches the target bot
+- Verify the slash command format is correct
+
+### CAPTCHA not solving
+- Check your internet connection
+- Verify Pollinations AI is accessible
+- The AI might need multiple attempts
+- Check console for detailed error messages
+
+### Credentials not received
+- Ensure you have DMs enabled
+- Check that the bot is sending DMs
+- Verify the embed parsing is working
+- Look for credentials in console output
+
+### Login failure
+- Your token may have expired
+- You may need to get a new token
+- Ensure there are no extra spaces in your token
+- Change your Discord password if token is compromised
+
+## Security Notes
+
+- Never commit your `.env` file to version control
+- Never share your Discord token with anyone
+- Use Replit Secrets for token storage on Replit
+- The `.gitignore` file is configured to exclude `.env`
+- If your token is compromised, change your password immediately
 
 ## Project Structure
 
@@ -115,39 +241,44 @@ Logs include timestamps and severity levels for easy debugging.
 ├── requirements.txt    # Python dependencies
 ├── .env.example       # Example environment configuration
 ├── .env               # Your actual configuration (not in git)
+├── .replit            # Replit configuration
+├── replit.nix         # Replit Nix configuration
 ├── .gitignore         # Git ignore rules
 └── README.md          # This file
 ```
 
-## Stopping the Bot
+## Dependencies
 
-To stop the bot, press `Ctrl+C` in the terminal where it's running.
+- `discord.py-self` - Discord self-bot library
+- `python-dotenv` - Environment variable management
+- `aiohttp` - Async HTTP client for API calls
+- `requests` - HTTP library for API requests
+- `Pillow` - Image processing library
 
-## Troubleshooting
+## API Integration
 
-### Bot won't start
-- Verify your token is correct in the `.env` file
-- Make sure you've installed all dependencies: `pip install -r requirements.txt`
-- Check `bot.log` for error messages
+### Pollinations AI
 
-### Bot doesn't respond to !ping
-- Ensure the bot is running and shows as logged in
-- Verify you're sending the command from your own account
-- Make sure the command is exactly `!ping` (no extra spaces)
-- Check `bot.log` for any error messages
+The bot uses Pollinations AI for CAPTCHA solving:
+- **Endpoint:** `https://text.pollinations.ai/`
+- **Model:** OpenAI GPT-5 Nano (with vision support)
+- **Features:** Text and image input, vision capabilities
+- **Cost:** Free (anonymous tier)
 
-### Login failure
-- Your token may have expired or been invalidated
-- You may need to get a new token following the steps above
-- Ensure there are no extra spaces in your `.env` file
+## Legal Notice
 
-## Security Notes
+This software is provided as-is for educational purposes only. The developers are not responsible for:
+- Account bans or suspensions
+- Terms of Service violations
+- Misuse of the software
+- Any damages resulting from use
 
-- Never commit your `.env` file to version control
-- Never share your Discord token with anyone
-- The `.gitignore` file is configured to exclude `.env` from git
-- If your token is ever compromised, change your Discord password immediately
+Use at your own risk and ensure compliance with all applicable terms of service and laws.
 
 ## License
 
 This project is provided as-is for educational purposes only.
+
+---
+
+**Made for Replit** 🚀
