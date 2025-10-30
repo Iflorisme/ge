@@ -44,7 +44,12 @@ The bot is pre-configured with:
      - **Key:** `token`
      - **Value:** Your Discord user token (see below for how to get it)
 
-3. Click the "Run" button
+3. Run the bot using one of these methods:
+   - **Method 1 (Recommended):** Type in the Shell: `./run.sh`
+   - **Method 2:** Type in the Shell: `python3 bot.py`
+   - **Method 3:** Click the "Run" button at the top
+
+4. If you see a "Workflows" message, just use Method 1 or 2 above
 
 ### For Local Development
 

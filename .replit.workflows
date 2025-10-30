@@ -1,0 +1,19 @@
+{
+  "workflows": {
+    "run": {
+      "name": "Run Bot",
+      "steps": [
+        {
+          "name": "Install Dependencies",
+          "type": "shell",
+          "command": "pip install -r requirements.txt"
+        },
+        {
+          "name": "Start Bot",
+          "type": "shell", 
+          "command": "python3 bot.py"
+        }
+      ]
+    }
+  }
+}

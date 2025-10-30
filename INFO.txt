@@ -1,0 +1,30 @@
+╔════════════════════════════════════════════════════════════╗
+║                                                            ║
+║       DISCORD ACCOUNT GENERATOR BOT FOR REPLIT             ║
+║                                                            ║
+╚════════════════════════════════════════════════════════════╝
+
+📋 QUICK START:
+
+  1. Set your Discord token in Replit Secrets:
+     • Click Tools → Secrets (🔒)
+     • Key: token
+     • Value: your_discord_user_token
+
+  2. Run the bot:
+     • In Shell: ./run.sh
+     • Or: python3 bot.py
+
+  3. Follow the prompts!
+
+📖 DOCUMENTATION:
+  • Full Guide: README.md
+  • Replit Setup: REPLIT_SETUP.md
+
+⚠️  DISCLAIMER:
+  Using self-bots violates Discord's ToS.
+  Educational purposes only. Use at your own risk.
+
+═══════════════════════════════════════════════════════════════
+
+Ready to start? Run: ./run.sh

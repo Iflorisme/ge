@@ -1,13 +1,8 @@
-run = "python3 bot.py"
-language = "python3"
-entrypoint = "bot.py"
+modules = ["python-3.11"]
 
 [nix]
-channel = "stable-22_11"
+channel = "stable-24_05"
 
-[env]
-PYTHONUNBUFFERED = "1"
-
-[deployment]
-run = ["python3", "bot.py"]
-deploymentTarget = "cloudrun"
+[[ports]]
+localPort = 8080
+externalPort = 80
