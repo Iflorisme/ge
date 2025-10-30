@@ -12,6 +12,7 @@ load_dotenv()
 
 CHANNEL_ID = 1422966181966516458
 BOT_ID = 1312131736691277914
+GUILD_ID = 1422819189802139660
 MAX_GENS = 5
 COOLDOWN = 3
 POLLINATIONS_API = "https://text.pollinations.ai/"
@@ -37,13 +38,14 @@ class GenBot(discord.Client):
         print("=" * 60)
         print(f"✓ Logged in as: {self.user.name}")
         print(f"✓ User ID: {self.user.id}")
+        print(f"✓ Target Guild: {GUILD_ID}")
         print(f"✓ Target Channel: {CHANNEL_ID}")
-        print(f"✓ Bot ID: {BOT_ID}")
+        print(f"✓ Target Bot: {BOT_ID}")
         print("=" * 60)
         print()
         
-        print("🔍 Fetching command information...")
         await self.fetch_command_id()
+        print()
         
         await self.start_gen_process()
         
@@ -52,65 +54,88 @@ class GenBot(discord.Client):
     
     async def fetch_command_id(self):
         try:
-            channel = self.get_channel(CHANNEL_ID)
-            if not channel:
-                print("⚠️  Could not fetch command ID: Channel not found")
-                return
-                
-            guild_id = channel.guild.id if hasattr(channel, 'guild') else None
-            if not guild_id:
-                print("⚠️  Could not fetch command ID: Not in a guild")
-                return
+            print(f"🔍 Searching for /pgen command from bot {BOT_ID}")
+            print(f"   In guild: {GUILD_ID}")
             
             headers = {
                 "Authorization": self.http.token
             }
             
             async with aiohttp.ClientSession() as session:
-                url = f"https://discord.com/api/v9/guilds/{guild_id}/application-commands/search?type=1&include_applications=true"
+                url = f"https://discord.com/api/v9/guilds/{GUILD_ID}/application-commands/search?type=1&query=pgen&limit=25&include_applications=true"
                 
+                print(f"🌐 Method 1: Searching guild commands...")
                 async with session.get(url, headers=headers) as resp:
                     if resp.status == 200:
                         data = await resp.json()
                         commands = data.get('application_commands', [])
                         
-                        print(f"📋 Found {len(commands)} commands in guild")
+                        print(f"   Found {len(commands)} total commands")
                         
                         for cmd in commands:
                             cmd_name = cmd.get('name', '')
-                            cmd_app_id = cmd.get('application_id', '')
+                            cmd_app_id = str(cmd.get('application_id', ''))
+                            cmd_id = cmd.get('id', '')
                             
-                            if cmd_name == 'pgen' and str(cmd_app_id) == str(BOT_ID):
-                                self.pgen_command_id = cmd.get('id')
+                            if cmd_name == 'pgen' and cmd_app_id == str(BOT_ID):
+                                self.pgen_command_id = cmd_id
                                 cmd_version = cmd.get('version', 'unknown')
-                                print(f"✓ Found /pgen command!")
-                                print(f"  ID: {self.pgen_command_id}")
-                                print(f"  Version: {cmd_version}")
-                                print(f"  Application: {cmd_app_id}")
+                                print(f"✅ SUCCESS! Found /pgen command!")
+                                print(f"   Command ID: {self.pgen_command_id}")
+                                print(f"   Version: {cmd_version}")
+                                print(f"   Bot ID: {cmd_app_id}")
                                 return
                         
-                        print("⚠️  /pgen command not found in guild commands")
-                        print("    Trying alternative method...")
-                        
-                        url2 = f"https://discord.com/api/v9/applications/{BOT_ID}/commands"
-                        async with session.get(url2, headers=headers) as resp2:
-                            if resp2.status == 200:
-                                data2 = await resp2.json()
-                                for cmd in data2:
-                                    if cmd.get('name') == 'pgen':
-                                        self.pgen_command_id = cmd.get('id')
-                                        print(f"✓ Found /pgen command via alternative method!")
-                                        print(f"  ID: {self.pgen_command_id}")
-                                        return
-                        
-                        print("⚠️  Could not find /pgen command")
+                        print(f"   ⚠️  /pgen not found in search results")
                     else:
                         error_text = await resp.text()
-                        print(f"⚠️  Could not fetch commands: Status {resp.status}")
-                        print(f"    Response: {error_text[:200]}")
+                        print(f"   ❌ Search failed: Status {resp.status}")
+                
+                print(f"🌐 Method 2: Fetching all guild commands...")
+                url2 = f"https://discord.com/api/v9/guilds/{GUILD_ID}/application-commands"
+                async with session.get(url2, headers=headers) as resp:
+                    if resp.status == 200:
+                        commands = await resp.json()
+                        print(f"   Found {len(commands)} commands")
+                        
+                        for cmd in commands:
+                            cmd_name = cmd.get('name', '')
+                            cmd_app_id = str(cmd.get('application_id', ''))
+                            
+                            print(f"   - /{cmd_name} (App: {cmd_app_id})")
+                            
+                            if cmd_name == 'pgen' and cmd_app_id == str(BOT_ID):
+                                self.pgen_command_id = cmd.get('id')
+                                print(f"✅ SUCCESS! Found /pgen command!")
+                                print(f"   Command ID: {self.pgen_command_id}")
+                                return
+                    else:
+                        print(f"   ❌ Failed: Status {resp.status}")
+                
+                print(f"🌐 Method 3: Trying to fetch from bot applications...")
+                url3 = f"https://discord.com/api/v9/applications/{BOT_ID}/guilds/{GUILD_ID}/commands"
+                async with session.get(url3, headers=headers) as resp:
+                    if resp.status == 200:
+                        commands = await resp.json()
+                        print(f"   Found {len(commands)} bot commands")
+                        
+                        for cmd in commands:
+                            if cmd.get('name') == 'pgen':
+                                self.pgen_command_id = cmd.get('id')
+                                print(f"✅ SUCCESS! Found /pgen via bot API!")
+                                print(f"   Command ID: {self.pgen_command_id}")
+                                return
+                    else:
+                        print(f"   ❌ Failed: Status {resp.status}")
+                
+                print(f"\n❌ FAILED: Could not find /pgen command after trying all methods")
+                print(f"   Make sure:")
+                print(f"   1. Bot {BOT_ID} is in guild {GUILD_ID}")
+                print(f"   2. The /pgen command exists")
+                print(f"   3. You have permission to see the command")
                         
         except Exception as e:
-            print(f"⚠️  Error fetching command ID: {e}")
+            print(f"❌ Error fetching command ID: {e}")
             import traceback
             traceback.print_exc()
         
@@ -238,8 +263,6 @@ class GenBot(discord.Client):
                 print(f"    Sent as text, you may need to manually run: /pgen stock:{stock}")
                 return
             
-            guild_id = channel.guild.id if hasattr(channel, 'guild') else None
-            
             url = f"https://discord.com/api/v9/interactions"
             
             headers = {
@@ -253,7 +276,7 @@ class GenBot(discord.Client):
             payload = {
                 "type": 2,
                 "application_id": str(BOT_ID),
-                "guild_id": str(guild_id) if guild_id else None,
+                "guild_id": str(GUILD_ID),
                 "channel_id": str(channel.id),
                 "session_id": session_id,
                 "data": {

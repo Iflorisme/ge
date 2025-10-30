@@ -48,6 +48,7 @@ The bot sends a proper interaction payload that mimics what the Discord client w
 ## Configuration
 
 The bot is configured for:
+- **Target Guild/Server**: 1422819189802139660
 - **Target Channel**: 1422966181966516458
 - **Target Bot**: 1312131736691277914  
 - **Command**: `/pgen stock:<name>`
