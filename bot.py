@@ -44,6 +44,16 @@ class GenBot(discord.Client):
         print("=" * 60)
         print()
         
+        if not await self.verify_guild_access():
+            print()
+            print("=" * 60)
+            print("❌ SETUP ERROR: Cannot proceed without guild access")
+            print("=" * 60)
+            print()
+            print("Please fix the issue and restart the bot.")
+            return
+        
+        print()
         await self.fetch_command_id()
         print()
         print("=" * 60)
@@ -61,6 +71,41 @@ class GenBot(discord.Client):
         
     def clear_console(self):
         os.system('clear' if os.name != 'nt' else 'cls')
+    
+    async def verify_guild_access(self):
+        try:
+            print(f"🔍 Verifying guild access...")
+            
+            my_guilds = self.guilds
+            print(f"   You are in {len(my_guilds)} guild(s):")
+            
+            target_guild = None
+            for guild in my_guilds:
+                is_target = "← TARGET" if guild.id == GUILD_ID else ""
+                print(f"   - {guild.name} (ID: {guild.id}) {is_target}")
+                if guild.id == GUILD_ID:
+                    target_guild = guild
+            
+            if not target_guild:
+                print(f"\n❌ ERROR: You are NOT in guild {GUILD_ID}")
+                print(f"   Please check the GUILD_ID in bot.py")
+                print(f"   Or join the correct Discord server")
+                return False
+            
+            print(f"\n✅ Guild verified: {target_guild.name}")
+            
+            channel = self.get_channel(CHANNEL_ID)
+            if not channel:
+                print(f"⚠️  Warning: Cannot access channel {CHANNEL_ID}")
+                print(f"   You might not have permission to see this channel")
+            else:
+                print(f"✅ Channel verified: #{channel.name}")
+            
+            return True
+            
+        except Exception as e:
+            print(f"❌ Error verifying guild: {e}")
+            return False
     
     async def fetch_command_id(self):
         try:
