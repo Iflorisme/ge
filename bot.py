@@ -27,6 +27,7 @@ class GenBot(discord.Client):
         self.current_stock = None
         self.target_gens = 0
         self.generated_accounts = []
+        self.pgen_command_id = None
         
     async def on_ready(self):
         self.user_id = self.user.id
@@ -41,10 +42,49 @@ class GenBot(discord.Client):
         print("=" * 60)
         print()
         
+        print("🔍 Fetching command information...")
+        await self.fetch_command_id()
+        
         await self.start_gen_process()
         
     def clear_console(self):
         os.system('clear' if os.name != 'nt' else 'cls')
+    
+    async def fetch_command_id(self):
+        try:
+            channel = self.get_channel(CHANNEL_ID)
+            if not channel:
+                print("⚠️  Could not fetch command ID: Channel not found")
+                return
+                
+            guild_id = channel.guild.id if hasattr(channel, 'guild') else None
+            if not guild_id:
+                print("⚠️  Could not fetch command ID: Not in a guild")
+                return
+            
+            url = f"https://discord.com/api/v9/guilds/{guild_id}/application-commands/search?type=1&include_applications=true&application_id={BOT_ID}"
+            
+            headers = {
+                "Authorization": self.http.token
+            }
+            
+            async with aiohttp.ClientSession() as session:
+                async with session.get(url, headers=headers) as resp:
+                    if resp.status == 200:
+                        data = await resp.json()
+                        commands = data.get('application_commands', [])
+                        
+                        for cmd in commands:
+                            if cmd.get('name') == 'pgen':
+                                self.pgen_command_id = cmd.get('id')
+                                print(f"✓ Found /pgen command (ID: {self.pgen_command_id})")
+                                return
+                        
+                        print("⚠️  /pgen command not found, will use fallback")
+                    else:
+                        print(f"⚠️  Could not fetch commands: Status {resp.status}")
+        except Exception as e:
+            print(f"⚠️  Error fetching command ID: {e}")
         
     async def start_gen_process(self):
         while True:
@@ -164,10 +204,71 @@ class GenBot(discord.Client):
         
     async def send_slash_command(self, channel, stock):
         try:
-            command = f"/pgen stock:{stock}"
-            await channel.send(command)
+            guild_id = channel.guild.id if hasattr(channel, 'guild') else None
+            
+            command_id = self.pgen_command_id if self.pgen_command_id else "1"
+            
+            url = f"https://discord.com/api/v9/interactions"
+            
+            headers = {
+                "Authorization": self.http.token,
+                "Content-Type": "application/json"
+            }
+            
+            nonce = str(int(datetime.now().timestamp() * 1000))
+            session_id = self.ws.session_id if hasattr(self, 'ws') and hasattr(self.ws, 'session_id') else None
+            
+            payload = {
+                "type": 2,
+                "application_id": str(BOT_ID),
+                "guild_id": str(guild_id) if guild_id else None,
+                "channel_id": str(channel.id),
+                "session_id": session_id,
+                "data": {
+                    "version": "1",
+                    "id": command_id,
+                    "name": "pgen",
+                    "type": 1,
+                    "options": [
+                        {
+                            "type": 3,
+                            "name": "stock",
+                            "value": stock
+                        }
+                    ],
+                    "application_command": {
+                        "id": command_id,
+                        "type": 1,
+                        "application_id": str(BOT_ID),
+                        "version": "1",
+                        "name": "pgen",
+                        "description": "Generate account",
+                        "options": [
+                            {
+                                "type": 3,
+                                "name": "stock",
+                                "description": "Stock to generate",
+                                "required": True
+                            }
+                        ]
+                    },
+                    "attachments": []
+                },
+                "nonce": nonce
+            }
+            
+            async with aiohttp.ClientSession() as session:
+                async with session.post(url, json=payload, headers=headers) as resp:
+                    if resp.status in [200, 201, 204]:
+                        pass
+                    else:
+                        error_text = await resp.text()
+                        print(f"\n⚠️  Command response: {resp.status}")
+                        if resp.status == 400:
+                            print(f"    Hint: Command ID might be wrong or command doesn't exist")
+                        
         except Exception as e:
-            print(f"❌ Failed to send command: {e}")
+            print(f"\n❌ Failed to send slash command: {e}")
             
     async def on_message(self, message):
         try:
