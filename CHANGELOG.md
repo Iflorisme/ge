@@ -1,6 +1,6 @@
 # Changelog
 
-## [Latest] - Slash Command Fix
+## [Latest] - Enhanced Slash Command with Debug Info
 
 ### Fixed
 - **Slash Command Execution**: Bot now properly executes the `/pgen` slash command instead of sending it as a text message
@@ -8,11 +8,26 @@
   - Added automatic command ID fetching from the target bot
   - Uses Discord v9 interactions API endpoint
   - Includes proper payload structure with application_id, guild_id, channel_id, and session_id
+- **Command Fetching**: Improved command discovery with multiple fallback methods
+  - Searches all guild commands first
+  - Falls back to application commands if guild search fails
+  - Validates bot ID matches to ensure correct command
+- **Error Handling**: Much better error messages and debugging info
+  - Shows number of commands found
+  - Displays command ID, version, and application ID when found
+  - Provides detailed error messages with status codes
+  - Includes fallback to text messages when command ID not found
 
 ### Added
 - `fetch_command_id()` method: Automatically discovers the `/pgen` command ID from the target bot
+  - Multiple fallback methods for finding commands
+  - Detailed console output for debugging
+  - Version and application ID verification
 - `pgen_command_id` attribute: Stores the command ID for proper invocation
 - Better error handling with status code checks and helpful hints
+- Full traceback on errors for debugging
+- Fallback mode: Sends text message if command ID not found
+- DEBUG_GUIDE.md: Comprehensive troubleshooting guide
 
 ### Technical Details
 The bot now:

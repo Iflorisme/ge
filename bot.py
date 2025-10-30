@@ -62,29 +62,57 @@ class GenBot(discord.Client):
                 print("⚠️  Could not fetch command ID: Not in a guild")
                 return
             
-            url = f"https://discord.com/api/v9/guilds/{guild_id}/application-commands/search?type=1&include_applications=true&application_id={BOT_ID}"
-            
             headers = {
                 "Authorization": self.http.token
             }
             
             async with aiohttp.ClientSession() as session:
+                url = f"https://discord.com/api/v9/guilds/{guild_id}/application-commands/search?type=1&include_applications=true"
+                
                 async with session.get(url, headers=headers) as resp:
                     if resp.status == 200:
                         data = await resp.json()
                         commands = data.get('application_commands', [])
                         
+                        print(f"📋 Found {len(commands)} commands in guild")
+                        
                         for cmd in commands:
-                            if cmd.get('name') == 'pgen':
+                            cmd_name = cmd.get('name', '')
+                            cmd_app_id = cmd.get('application_id', '')
+                            
+                            if cmd_name == 'pgen' and str(cmd_app_id) == str(BOT_ID):
                                 self.pgen_command_id = cmd.get('id')
-                                print(f"✓ Found /pgen command (ID: {self.pgen_command_id})")
+                                cmd_version = cmd.get('version', 'unknown')
+                                print(f"✓ Found /pgen command!")
+                                print(f"  ID: {self.pgen_command_id}")
+                                print(f"  Version: {cmd_version}")
+                                print(f"  Application: {cmd_app_id}")
                                 return
                         
-                        print("⚠️  /pgen command not found, will use fallback")
+                        print("⚠️  /pgen command not found in guild commands")
+                        print("    Trying alternative method...")
+                        
+                        url2 = f"https://discord.com/api/v9/applications/{BOT_ID}/commands"
+                        async with session.get(url2, headers=headers) as resp2:
+                            if resp2.status == 200:
+                                data2 = await resp2.json()
+                                for cmd in data2:
+                                    if cmd.get('name') == 'pgen':
+                                        self.pgen_command_id = cmd.get('id')
+                                        print(f"✓ Found /pgen command via alternative method!")
+                                        print(f"  ID: {self.pgen_command_id}")
+                                        return
+                        
+                        print("⚠️  Could not find /pgen command")
                     else:
+                        error_text = await resp.text()
                         print(f"⚠️  Could not fetch commands: Status {resp.status}")
+                        print(f"    Response: {error_text[:200]}")
+                        
         except Exception as e:
             print(f"⚠️  Error fetching command ID: {e}")
+            import traceback
+            traceback.print_exc()
         
     async def start_gen_process(self):
         while True:
@@ -204,9 +232,13 @@ class GenBot(discord.Client):
         
     async def send_slash_command(self, channel, stock):
         try:
-            guild_id = channel.guild.id if hasattr(channel, 'guild') else None
+            if not self.pgen_command_id:
+                print(f"\n⚠️  Command ID not found! Attempting manual trigger...")
+                await channel.send(f"/pgen stock:{stock}")
+                print(f"    Sent as text, you may need to manually run: /pgen stock:{stock}")
+                return
             
-            command_id = self.pgen_command_id if self.pgen_command_id else "1"
+            guild_id = channel.guild.id if hasattr(channel, 'guild') else None
             
             url = f"https://discord.com/api/v9/interactions"
             
@@ -226,7 +258,7 @@ class GenBot(discord.Client):
                 "session_id": session_id,
                 "data": {
                     "version": "1",
-                    "id": command_id,
+                    "id": str(self.pgen_command_id),
                     "name": "pgen",
                     "type": 1,
                     "options": [
@@ -237,7 +269,7 @@ class GenBot(discord.Client):
                         }
                     ],
                     "application_command": {
-                        "id": command_id,
+                        "id": str(self.pgen_command_id),
                         "type": 1,
                         "application_id": str(BOT_ID),
                         "version": "1",
@@ -263,12 +295,17 @@ class GenBot(discord.Client):
                         pass
                     else:
                         error_text = await resp.text()
-                        print(f"\n⚠️  Command response: {resp.status}")
+                        print(f"\n⚠️  Slash command failed (Status {resp.status})")
+                        print(f"    Error: {error_text[:200]}")
                         if resp.status == 400:
-                            print(f"    Hint: Command ID might be wrong or command doesn't exist")
+                            print(f"    The command might not be available or parameters are wrong")
+                            print(f"    Trying fallback method...")
+                            await channel.send(f"/pgen stock:{stock}")
                         
         except Exception as e:
             print(f"\n❌ Failed to send slash command: {e}")
+            import traceback
+            traceback.print_exc()
             
     async def on_message(self, message):
         try:
